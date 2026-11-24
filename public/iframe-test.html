@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MDC Salla Homepage Simulation - Iframe Embedding Test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: #f1f3f5;
+      color: #212529;
+      padding: 20px;
+    }
+    .header {
+      background: #ffffff;
+      padding: 16px 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .brand {
+      font-size: 20px;
+      font-weight: 800;
+      color: #EC6B1F;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge {
+      background: #FFF3E0;
+      color: #E65100;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1px solid #ced4da;
+      background: #ffffff;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #FFB531;
+      border-color: #EC6B1F;
+      color: #000;
+    }
+    .showroom-container {
+      background: #ffffff;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      border: 1px solid #e9ecef;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    iframe {
+      width: 100%;
+      height: 720px;
+      border: none;
+      display: block;
+    }
+    .height-buttons {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      color: #6c757d;
+    }
+    .log-panel {
+      background: #1e1e1e;
+      color: #00ff66;
+      font-family: monospace;
+      padding: 16px;
+      border-radius: 16px;
+      font-size: 12px;
+      max-height: 180px;
+      overflow-y: auto;
+      direction: ltr;
+      text-align: left;
+    }
+    .log-panel h4 {
+      color: #fff;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="brand">
+      <span>متجر إم دي سي للأثاث (محاكاة منصة سلة)</span>
+      <span class="badge">بيئة اختبار iframe</span>
+    </div>
+
+    <div class="height-buttons">
+      <span>تغيير ارتفاع الحاوية:</span>
+      <button onclick="setIframeHeight(550)">550px (موبايل)</button>
+      <button onclick="setIframeHeight(720)">720px (قياسي)</button>
+      <button onclick="setIframeHeight(880)">880px (شاشة عريضة)</button>
+    </div>
+  </div>
+
+  <div class="header" style="justify-content: flex-start; gap: 10px;">
+    <span style="font-weight: 700; font-size: 13px;">أوامر postMessage من الصفحة الرئيسية إلى المعرض:</span>
+    <div class="controls">
+      <button onclick="sendAction({ type: 'OPEN_ROOM', roomId: 'living-room' })">فتح غرفة المعيشة</button>
+      <button onclick="sendAction({ type: 'OPEN_ROOM', roomId: 'bedroom' })">فتح غرفة النوم</button>
+      <button onclick="sendAction({ type: 'OPEN_ROOM', roomId: 'dining-room' })">فتح غرفة الطعام</button>
+      <button onclick="sendAction({ type: 'BACK_TO_FLOOR_PLAN' })">العودة للمخطط</button>
+      <button onclick="sendAction({ type: 'CHANGE_LANGUAGE', language: 'en' })">تبديل للإنجليزية</button>
+      <button onclick="sendAction({ type: 'CHANGE_LANGUAGE', language: 'ar' })">تبديل للعربية</button>
+      <button onclick="sendAction({ type: 'RESET_VIEW' })">إعادة ضبط الكاميرا</button>
+    </div>
+  </div>
+
+  <div class="showroom-container">
+    <iframe
+      id="showroomIframe"
+      src="/?embed=1"
+      title="MDC Interactive 3D Showroom"
+      allow="fullscreen"
+      allowfullscreen
+    ></iframe>
+  </div>
+
+  <div class="log-panel">
+    <h4>سجل أحداث postMessage المستلمة من المعرض:</h4>
+    <div id="logOutput">// Waiting for messages from 3D Showroom...</div>
+  </div>
+
+  <script>
+    const iframe = document.getElementById('showroomIframe');
+    const logOutput = document.getElementById('logOutput');
+
+    function setIframeHeight(h) {
+      iframe.style.height = h + 'px';
+      log(`Iframe height changed to ${h}px`);
+    }
+
+    function sendAction(msg) {
+      iframe.contentWindow.postMessage(msg, '*');
+      log(`[SENT to Showroom]: ` + JSON.stringify(msg));
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.data && typeof event.data === 'object' && event.data.type?.startsWith('MDC_')) {
+        log(`[RECEIVED from Showroom]: ` + JSON.stringify(event.data));
+      }
+    });
+
+    function log(text) {
+      const time = new Date().toLocaleTimeString();
+      logOutput.innerHTML = `[${time}] ${text}<br>` + logOutput.innerHTML;
+    }
+  </script>
+</body>
+</html>
